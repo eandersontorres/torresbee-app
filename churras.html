@@ -775,46 +775,41 @@ function TaskManager({mgmtTasks,setMgmtTasks,employees}){
     })()}
 
     {/* Add/Edit Form */}
-    {showForm&&(()=>{
-      return(
-        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.93)",zIndex:300,display:"flex",alignItems:"flex-end"}} onClick={e=>e.target===e.currentTarget&&setShowForm(false)}>
-          <div style={{background:C.surface,borderRadius:"22px 22px 0 0",width:"100%",maxHeight:"88vh",display:"flex",flexDirection:"column",border:`1px solid ${C.border}`}} className="fi">
-            {/* Fixed header */}
-            <div style={{padding:"18px 18px 12px",borderBottom:`1px solid ${C.border}`,flexShrink:0}}>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
-                <div style={{fontSize:17,fontWeight:800}}>{editId?"✏️ Editar Tarefa":"➕ Nova Tarefa"}</div>
-                <button onClick={()=>setShowForm(false)} style={{background:"none",border:"none",color:C.textMuted,fontSize:22,cursor:"pointer"}}>✕</button>
-              </div>
-              {/* Name field always visible at top */}
-              <label style={lbl}>Nome da Tarefa *</label>
-              <input
-                autoFocus
-                style={{...inp,fontSize:15,fontWeight:600}}
-                placeholder="Ex: Renovar contrato de fornecedor"
-                value={form.name}
-                onChange={e=>setForm(p=>({...p,name:e.target.value}))}
-              />
+    {showForm&&(
+      <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.93)",zIndex:300,overflowY:"auto"}} onClick={e=>e.target===e.currentTarget&&setShowForm(false)}>
+        <div style={{minHeight:"100%",display:"flex",alignItems:"flex-end"}}>
+          <div style={{background:C.surface,borderRadius:"22px 22px 0 0",width:"100%",padding:"20px 18px 40px",border:`1px solid ${C.border}`}} className="fi">
+            {/* Header */}
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+              <div style={{fontSize:17,fontWeight:800}}>{editId?"✏️ Editar Tarefa":"➕ Nova Tarefa"}</div>
+              <button onClick={()=>setShowForm(false)} style={{background:"none",border:"none",color:C.textMuted,fontSize:22,cursor:"pointer"}}>✕</button>
             </div>
-            {/* Scrollable body */}
-            <div style={{overflowY:"auto",padding:"14px 18px 0",flex:1}}>
-              <div style={{marginBottom:14}}><label style={lbl}>💡 Motivo / Contexto (Why)</label><input style={inp} placeholder="Por que esta tarefa é importante?" value={form.why} onChange={e=>setForm(p=>({...p,why:e.target.value}))}/></div>
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:14}}>
-                <div><label style={lbl}>📅 Deadline</label><input type="date" style={inp} value={form.deadline} onChange={e=>setForm(p=>({...p,deadline:e.target.value}))}/></div>
-                <div><label style={lbl}>Prioridade</label><select style={inp} value={form.priority} onChange={e=>setForm(p=>({...p,priority:e.target.value}))}><option value="alta">🔴 Alta</option><option value="media">🟡 Média</option><option value="baixa">🟢 Baixa</option></select></div>
-                <div><label style={lbl}>Status</label><select style={inp} value={form.status} onChange={e=>setForm(p=>({...p,status:e.target.value}))}><option value="todo">📋 A Fazer</option><option value="inprogress">⚡ Em Progresso</option><option value="done">✅ Concluído</option></select></div>
-                <div><label style={lbl}>Responsável</label><select style={inp} value={form.assignedTo} onChange={e=>setForm(p=>({...p,assignedTo:e.target.value}))}><option value="">Selecionar</option>{employees.filter(e=>e.active).map(e=><option key={e.id} value={e.id}>{e.name}</option>)}</select></div>
-              </div>
+            {/* Nome — campo principal */}
+            <div style={{marginBottom:16}}>
+              <label style={{...lbl,color:C.gold}}>📝 NOME DA TAREFA *</label>
+              <input autoFocus style={{...inp,fontSize:15,fontWeight:600,border:`1px solid ${C.gold}55`}} placeholder="Ex: Renovar contrato de fornecedor" value={form.name} onChange={e=>setForm(p=>({...p,name:e.target.value}))}/>
             </div>
-            {/* Fixed footer button */}
-            <div style={{padding:"12px 18px 28px",borderTop:`1px solid ${C.border}`,flexShrink:0}}>
-              <button onClick={save} disabled={!form.name.trim()} style={{width:"100%",padding:"13px",borderRadius:12,fontWeight:800,fontSize:15,cursor:form.name.trim()?"pointer":"not-allowed",border:"none",background:C.gold,color:"#100900",opacity:form.name.trim()?1:0.5}}>
-                {editId?"💾 Salvar Alterações":"➕ Criar Tarefa"}
-              </button>
+            {/* Why */}
+            <div style={{marginBottom:16}}>
+              <label style={lbl}>💡 MOTIVO / CONTEXTO (WHY)</label>
+              <input style={inp} placeholder="Por que esta tarefa é importante?" value={form.why} onChange={e=>setForm(p=>({...p,why:e.target.value}))}/>
             </div>
+            {/* Grid campos */}
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:16}}>
+              <div><label style={lbl}>📅 DEADLINE</label><input type="date" style={inp} value={form.deadline} onChange={e=>setForm(p=>({...p,deadline:e.target.value}))}/></div>
+              <div><label style={lbl}>PRIORIDADE</label><select style={inp} value={form.priority} onChange={e=>setForm(p=>({...p,priority:e.target.value}))}><option value="alta">🔴 Alta</option><option value="media">🟡 Média</option><option value="baixa">🟢 Baixa</option></select></div>
+              <div><label style={lbl}>STATUS</label><select style={inp} value={form.status} onChange={e=>setForm(p=>({...p,status:e.target.value}))}><option value="todo">📋 A Fazer</option><option value="inprogress">⚡ Em Progresso</option><option value="done">✅ Concluído</option></select></div>
+              <div><label style={lbl}>RESPONSÁVEL</label><select style={inp} value={form.assignedTo} onChange={e=>setForm(p=>({...p,assignedTo:e.target.value}))}><option value="">Selecionar</option>{employees.filter(e=>e.active).map(e=><option key={e.id} value={e.id}>{e.name}</option>)}</select></div>
+            </div>
+            {/* Botão */}
+            <button onClick={save} disabled={!form.name.trim()} style={{width:"100%",padding:"14px",borderRadius:12,fontWeight:800,fontSize:15,cursor:form.name.trim()?"pointer":"not-allowed",border:"none",background:form.name.trim()?C.gold:"#2A2A2A",color:form.name.trim()?"#100900":C.textDim,transition:"all 0.2s"}}>
+              {editId?"💾 Salvar Alterações":"➕ Criar Tarefa"}
+            </button>
+            {!form.name.trim()&&<div style={{textAlign:"center",fontSize:12,color:C.textDim,marginTop:8}}>Preencha o nome da tarefa para continuar</div>}
           </div>
         </div>
-      );
-    })()}
+      </div>
+    )}
   </div>);
 }
 
