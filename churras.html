@@ -95,7 +95,7 @@ let msalApp=null;
 async function msalInit(clientId){
   if(msalApp)return;
   // Detect redirect URI: if hosted on SharePoint use current URL, else localhost
-  const redirectUri=window.location.protocol==="file:"?"http://localhost":window.location.href.split("?")[0].split("#")[0];
+  const redirectUri="https://eandersontorres.github.io/torresbee-app/churras.html";
   msalApp=new msal.PublicClientApplication({
     auth:{clientId,authority:"https://login.microsoftonline.com/common",redirectUri},
     cache:{cacheLocation:"localStorage",storeAuthStateInCookie:false}
@@ -781,8 +781,8 @@ function TaskManager({mgmtTasks,setMgmtTasks,employees}){
           <div style={{fontSize:17,fontWeight:800}}>{editId?"✏️ Editar":"➕ Nova Tarefa"}</div>
           <button onClick={()=>setShowForm(false)} style={{background:"none",border:"none",color:C.textMuted,fontSize:22,cursor:"pointer"}}>✕</button>
         </div>
-        <div style={{marginBottom:14}}><label style={lbl}>Nome da Tarefa *</label><input style={inp} placeholder="Ex: Renovar contrato de fornecedor" value={form.name} onChange={e=>setForm(p=>({...p,name:e.target.value}))}/></div>
-        <div style={{marginBottom:14}}><label style={lbl}>💡 Motivo / Contexto (Why)</label><textarea style={{...inp,minHeight:86,resize:"vertical"}} placeholder="Por que esta tarefa é importante?" value={form.why} onChange={e=>setForm(p=>({...p,why:e.target.value}))}/></div>
+        <div style={{marginBottom:14}}><label style={lbl}>Nome da Tarefa *</label><input style={{...inp,fontSize:15,fontWeight:600}} placeholder="Ex: Renovar contrato de fornecedor" value={form.name} onChange={e=>setForm(p=>({...p,name:e.target.value}))}/></div>
+        <div style={{marginBottom:14}}><label style={lbl}>💡 Motivo / Contexto (Why)</label><input style={inp} placeholder="Por que esta tarefa é importante?" value={form.why} onChange={e=>setForm(p=>({...p,why:e.target.value}))}/></div>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:20}}>
           <div><label style={lbl}>📅 Deadline</label><input type="date" style={inp} value={form.deadline} onChange={e=>setForm(p=>({...p,deadline:e.target.value}))}/></div>
           <div><label style={lbl}>Prioridade</label><select style={inp} value={form.priority} onChange={e=>setForm(p=>({...p,priority:e.target.value}))}><option value="alta">🔴 Alta</option><option value="media">🟡 Média</option><option value="baixa">🟢 Baixa</option></select></div>
