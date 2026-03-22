@@ -290,6 +290,116 @@ function WhoDidIt({deptId,employees,onSelect,onClose}){
   );
 }
 
+/* ── DEPT PRODUCTION VIEW ── */
+function DeptProductionView({deptId,weekPlan,setWeekPlan}){
+  const[activeSection,setActiveSection]=useState(deptId==="foh"?"bar":"bakery");
+  const[tab,setTab]=useState("plano");
+
+  // BOH sees: bakery, meal, linha, expo. FOH sees: bar only
+  const allowedSections=deptId==="foh"
+    ?{bar:PROD_SECTIONS.bar}
+    :{bakery:PROD_SECTIONS.bakery,meal:PROD_SECTIONS.meal,linha:PROD_SECTIONS.linha,expo:PROD_SECTIONS.expo};
+
+  const plan=weekPlan&&weekPlan.length===7?weekPlan:DAYS.map(d=>({day:d,items:{}}));
+
+  function toggleItem(dayIdx,section,item){
+    const updated=plan.map((d,i)=>{
+      if(i!==dayIdx)return d;
+      const si={...(d.items||{})};
+      const list=si[section]||[];
+      si[section]=list.includes(item)?list.filter(x=>x!==item):[...list,item];
+      return{...d,items:si};
+    });
+    setWeekPlan(updated);
+  }
+  function setQty(dayIdx,section,item,qty){
+    const updated=plan.map((d,i)=>{
+      if(i!==dayIdx)return d;
+      return{...d,items:{...(d.items||{}),[`${section}__${item}__qty`]:qty}};
+    });
+    setWeekPlan(updated);
+  }
+  function getQty(dayIdx,section,item){return plan[dayIdx]?.items?.[`${section}__${item}__qty`]||"";}
+  function isPlanned(dayIdx,section,item){return(plan[dayIdx]?.items?.[section]||[]).includes(item);}
+  function countDay(dayIdx){const items=plan[dayIdx]?.items||{};return Object.keys(allowedSections).reduce((acc,s)=>(items[s]||[]).length+acc,0);}
+  function clearDay(dayIdx){if(!window.confirm("Limpar este dia?"))return;const u=plan.map((d,i)=>i===dayIdx?{...d,items:{}}:d);setWeekPlan(u);}
+
+  const sec=allowedSections[activeSection]||Object.values(allowedSections)[0];
+  const secKey=Object.keys(allowedSections).includes(activeSection)?activeSection:Object.keys(allowedSections)[0];
+
+  const todayName=DAYS[new Date().getDay()===0?6:new Date().getDay()-1];
+  const todayIdx=DAYS.indexOf(todayName);
+
+  return(<div className="fi">
+    <div style={{display:"flex",background:C.surface,marginBottom:14,borderRadius:12,border:`1px solid ${C.border}`,overflow:"hidden"}}>
+      {[{id:"plano",l:"📅 Plano Semanal"},{id:"hoje",l:"📋 Hoje"}].map(t=><button key={t.id} onClick={()=>setTab(t.id)} style={{flex:1,padding:"10px",fontSize:13,fontWeight:700,color:tab===t.id?C.gold:C.textMuted,background:"none",border:"none",borderBottom:`2px solid ${tab===t.id?C.gold:"transparent"}`,cursor:"pointer"}}>{t.l}</button>)}
+    </div>
+
+    {/* Section tabs (only for BOH which has multiple sections) */}
+    {deptId==="boh"&&<div style={{display:"flex",gap:6,overflowX:"auto",paddingBottom:8,marginBottom:14}}>
+      {Object.entries(allowedSections).map(([k,s])=>(
+        <button key={k} onClick={()=>setActiveSection(k)} style={{padding:"7px 14px",borderRadius:20,fontSize:12,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap",border:`1px solid ${activeSection===k?s.color:C.border}`,background:activeSection===k?`${s.color}22`:"transparent",color:activeSection===k?s.color:C.textMuted}}>
+          {s.icon} {s.label}
+        </button>
+      ))}
+    </div>}
+
+    {tab==="plano"&&<div>
+      {DAYS.map((day,dayIdx)=>{
+        const cnt=countDay(dayIdx);
+        return(<div key={day} style={{...cardS,border:`1px solid ${cnt>0?C.gold+"33":C.border}`}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+            <div style={{display:"flex",alignItems:"center",gap:8}}>
+              <div style={{fontWeight:700,fontSize:14,color:C.gold}}>{day}</div>
+              {cnt>0&&<span style={{fontSize:11,background:C.goldDim,color:C.goldLight,padding:"2px 8px",borderRadius:20}}>{cnt} itens</span>}
+            </div>
+            {cnt>0&&<button onClick={()=>clearDay(dayIdx)} style={{padding:"4px 10px",borderRadius:8,fontSize:11,cursor:"pointer",border:`1px solid ${C.redDim}`,background:"transparent",color:C.red}}>✕ Limpar</button>}
+          </div>
+          <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+            {sec.items.map(item=>{
+              const p=isPlanned(dayIdx,secKey,item);
+              const qty=getQty(dayIdx,secKey,item);
+              return(<div key={item} style={{display:"flex",alignItems:"center",gap:4}}>
+                <button onClick={()=>toggleItem(dayIdx,secKey,item)} style={{padding:"5px 10px",borderRadius:20,fontSize:12,fontWeight:600,cursor:"pointer",border:`1px solid ${p?sec.color:C.border}`,background:p?`${sec.color}22`:"transparent",color:p?sec.color:C.textMuted,whiteSpace:"nowrap"}}>
+                  {p?"✓ ":""}{item}
+                </button>
+                {p&&<input type="text" value={qty} onChange={e=>setQty(dayIdx,secKey,item,e.target.value)} placeholder="Qtd" style={{width:52,background:C.surface,border:`1px solid ${sec.color}44`,borderRadius:8,padding:"4px 6px",color:C.text,fontSize:11,textAlign:"center"}}/>}
+              </div>);
+            })}
+          </div>
+        </div>);
+      })}
+    </div>}
+
+    {tab==="hoje"&&(()=>{
+      const todayPlan=plan[todayIdx]||{day:todayName,items:{}};
+      return(<div>
+        <div style={{fontSize:16,fontWeight:800,color:C.gold,marginBottom:4}}>{todayName}</div>
+        <div style={{fontSize:12,color:C.textMuted,marginBottom:14}}>Lista de produção de hoje</div>
+        {Object.entries(allowedSections).map(([sKey,s])=>{
+          const items=todayPlan.items?.[sKey]||[];
+          if(items.length===0)return null;
+          return(<div key={sKey} style={{marginBottom:14}}>
+            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
+              <span style={{fontSize:14}}>{s.icon}</span>
+              <span style={{fontSize:13,fontWeight:700,color:s.color,textTransform:"uppercase",letterSpacing:0.5}}>{s.label}</span>
+              <span style={{fontSize:11,color:C.textDim}}>{items.length} itens</span>
+            </div>
+            {items.map(item=>{
+              const qty=todayPlan.items?.[`${sKey}__${item}__qty`]||"";
+              return(<div key={item} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"9px 12px",background:C.card,borderRadius:10,marginBottom:5,border:`1px solid ${C.border}`}}>
+                <span style={{fontSize:13,fontWeight:600}}>{item}</span>
+                {qty&&<span style={{fontSize:12,color:s.color,fontWeight:700,background:`${s.color}22`,padding:"2px 10px",borderRadius:20}}>{qty}</span>}
+              </div>);
+            })}
+          </div>);
+        })}
+        {Object.keys(allowedSections).every(s=>(todayPlan.items?.[s]||[]).length===0)&&<div style={{textAlign:"center",color:C.textMuted,padding:40}}>Nenhum item planejado para hoje.</div>}
+      </div>);
+    })()}
+  </div>);
+}
+
 /* ── DEPT TASK CARD ── */
 function DeptTaskCard({task,deptColor,onComplete,isClosing}){
   const[open,setOpen]=useState(false);
@@ -340,7 +450,7 @@ function DeptTaskCard({task,deptColor,onComplete,isClosing}){
 }
 
 /* ── DEPT VIEW ── */
-function DeptView({deptId,employees,tasks,taskStatus,setTaskStatus,onLogout,syncBar}){
+function DeptView({deptId,employees,tasks,taskStatus,setTaskStatus,weekPlan,setWeekPlan,onLogout,syncBar}){
   const[shift,setShift]=useState("abertura");
   const[tab,setTab]=useState("tarefas");
   const[time,setTime]=useState(new Date());
@@ -388,7 +498,7 @@ function DeptView({deptId,employees,tasks,taskStatus,setTaskStatus,onLogout,sync
         {pct===100&&shiftTasks.length>0&&<div style={{textAlign:"center",color:C.green,fontSize:13,fontWeight:700,marginTop:8}} className="fi">🎉 Turno concluído! Ótimo trabalho!</div>}
       </div>
       <div style={{display:"flex",background:C.surface,margin:"10px 14px 0",borderRadius:12,border:`1px solid ${C.border}`,overflow:"hidden"}}>
-        {[{id:"tarefas",l:`⏳ Pendentes (${pending.length})`},{id:"concluidas",l:`✅ Feitas (${completed.length})`}].map(t=><button key={t.id} onClick={()=>setTab(t.id)} style={{flex:1,padding:"10px 4px",fontSize:12,fontWeight:700,color:tab===t.id?dept.color:C.textMuted,background:"none",border:"none",borderBottom:`2px solid ${tab===t.id?dept.color:"transparent"}`,cursor:"pointer",transition:"all 0.2s"}}>{t.l}</button>)}
+        {[{id:"tarefas",l:`⏳ Pendentes (${pending.length})`},{id:"concluidas",l:`✅ Feitas (${completed.length})`},...((deptId==="boh"||deptId==="foh")?[{id:"producao",l:"🏭 Produção"}]:[])].map(t=><button key={t.id} onClick={()=>setTab(t.id)} style={{flex:1,padding:"10px 4px",fontSize:12,fontWeight:700,color:tab===t.id?dept.color:C.textMuted,background:"none",border:"none",borderBottom:`2px solid ${tab===t.id?dept.color:"transparent"}`,cursor:"pointer",transition:"all 0.2s"}}>{t.l}</button>)}
       </div>
       <div style={{flex:1,padding:"12px 14px 40px",overflowY:"auto"}}>
         {tab==="tarefas"&&<div className="fi">
@@ -406,6 +516,7 @@ function DeptView({deptId,employees,tasks,taskStatus,setTaskStatus,onLogout,sync
             {taskStatus[t.id]?.problem&&<div style={{fontSize:12,color:C.red,marginTop:4}}>⚠️ {taskStatus[t.id].problem}</div>}
           </div>)}
         </div>}
+        {tab==="producao"&&<DeptProductionView deptId={deptId} weekPlan={weekPlan} setWeekPlan={setWeekPlan}/>}
       </div>
       {whoTask&&<WhoDidIt deptId={deptId} employees={employees} onSelect={confirmComplete} onClose={()=>{setWhoTask(null);setPendingData(null);}}/>}
       {syncBar}
@@ -927,7 +1038,7 @@ function App(){
   if(screen==="spsetup")return<SPSetup onSave={cfg=>{setHasSP(true);setSPInfo({siteId:cfg.siteId,listId:cfg.listId,itemId:null});setScreen("login");loadFromSP(cfg.siteId,cfg.listId);}} onSkip={()=>setScreen("login")}/>;
   if(screen==="login")return<>{syncBar}<Login onLogin={handleLogin} employees={employees}/></>;
   if(screen==="gerente")return<Manager user={user} tasks={tasks} setTasks={wrap(setTasks)} taskStatus={taskStatus} setTaskStatus={wrap(setTaskStatus)} employees={employees} setEmployees={wrap(setEmployees)} mgmtTasks={mgmtTasks} setMgmtTasks={wrap(setMgmtTasks)} weekPlan={weekPlan} setWeekPlan={wrap(setWeekPlan)} onLogout={handleLogout} syncBar={syncBar}/>;
-  if(screen==="colaborador")return<DeptView deptId={deptId} employees={employees} tasks={tasks} taskStatus={taskStatus} setTaskStatus={wrap(setTaskStatus)} onLogout={handleLogout} syncBar={syncBar}/>;
+  if(screen==="colaborador")return<DeptView deptId={deptId} employees={employees} tasks={tasks} taskStatus={taskStatus} setTaskStatus={wrap(setTaskStatus)} weekPlan={weekPlan} setWeekPlan={wrap(setWeekPlan)} onLogout={handleLogout} syncBar={syncBar}/>;
   return null;
 }
 
