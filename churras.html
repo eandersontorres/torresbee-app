@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>TorresBee – Checklist</title>
 <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
@@ -17,6 +17,17 @@ input:focus,select:focus,textarea:focus{outline:2px solid #E8A020;outline-offset
 @keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}.fi{animation:fi 0.22s ease forwards}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}.pulse{animation:pulse 2s infinite}
 .prog{transition:width 0.5s ease}
+
+/* ── RESPONSIVE ── */
+:root { --max-w: 520px; --base: 15px; --card-p: 16px; --btn-p: 13px 22px; }
+@media (min-width: 768px) {
+  :root { --max-w: 720px; --base: 17px; --card-p: 20px; --btn-p: 15px 28px; }
+  body { font-size: 17px; }
+}
+@media (min-width: 1024px) {
+  :root { --max-w: 860px; --base: 18px; --card-p: 22px; }
+  body { font-size: 18px; }
+}
 </style>
 </head>
 <body>
@@ -40,8 +51,8 @@ const DEPARTMENTS=[
   {id:"boh",label:"Back of House",icon:"🍳",color:"#E8A020",bg:"#2A1A04"},
   {id:"foh",label:"Front of House",icon:"🍽️",color:"#4A90D9",bg:"#06152A"},
   {id:"bar",label:"Bar",icon:"🍹",color:"#7CB82F",bg:"#0F1F05"},
-  {id:"cashier",label:"Caixa / Operação",icon:"💵",color:"#E05050",bg:"#200808"},
-  {id:"cleaning",label:"Limpeza",icon:"🧹",color:"#9B6DD6",bg:"#1A0A2A"},
+  {id:"cashier",label:"Cashier / Operations",icon:"💵",color:"#E05050",bg:"#200808"},
+  {id:"cleaning",label:"Cleaning",icon:"🧹",color:"#9B6DD6",bg:"#1A0A2A"},
 ];
 
 const EMPLOYEES=[
@@ -72,11 +83,11 @@ const INIT_TASKS=[
   {id:5,title:"Montar e revisar o salão",description:"Arrumar mesas, polir talheres, velas.",time:"08:00",dept:"foh",priority:"media",videoUrl:"",sop:"",shift:"abertura",notifyAfter:30},
   {id:6,title:"Verificar POS e cardápio",description:"Conferir preços e itens disponíveis.",time:"08:15",dept:"cashier",priority:"media",videoUrl:"",sop:"",shift:"abertura",notifyAfter:0},
   {id:7,title:"Setup do Bar",description:"Preparar mise en place do bar, verificar estoque de bebidas.",time:"08:00",dept:"bar",priority:"media",videoUrl:"",sop:"",shift:"abertura",notifyAfter:30},
-  {id:8,title:"Limpeza do salão",description:"Varrer e limpar o salão antes da abertura.",time:"07:30",dept:"cleaning",priority:"media",videoUrl:"",sop:"",shift:"abertura",notifyAfter:30},
+  {id:8,title:"Cleaning do salão",description:"Varrer e limpar o salão antes da abertura.",time:"07:30",dept:"cleaning",priority:"media",videoUrl:"",sop:"",shift:"abertura",notifyAfter:30},
   {id:101,title:"Limpar e sanitizar cozinha",description:"Limpar fogão, fryer, chapa e superfícies.",time:"22:00",dept:"boh",priority:"alta",videoUrl:"",sop:"SOP-010: EPI obrigatório.",shift:"fechamento",notifyAfter:15},
   {id:102,title:"Armazenar e etiquetar alimentos",description:"Embalar com etiqueta: data e validade.",time:"22:15",dept:"boh",priority:"alta",videoUrl:"",sop:"SOP-011: Sem etiqueta = descarte.",shift:"fechamento",notifyAfter:15},
   {id:103,title:"Fechar caixa",description:"Conferir total, separar sangria.",time:"22:30",dept:"cashier",priority:"alta",videoUrl:"",sop:"",shift:"fechamento",notifyAfter:15},
-  {id:104,title:"Limpeza completa do salão",description:"Mesas, cadeiras, piso e banheiros.",time:"22:45",dept:"cleaning",priority:"media",videoUrl:"",sop:"",shift:"fechamento",notifyAfter:30},
+  {id:104,title:"Cleaning completa do salão",description:"Mesas, cadeiras, piso e banheiros.",time:"22:45",dept:"cleaning",priority:"media",videoUrl:"",sop:"",shift:"fechamento",notifyAfter:30},
   {id:105,title:"Desligar equipamentos e gás",description:"Desligar tudo, fechar registro de gás.",time:"23:00",dept:"boh",priority:"alta",videoUrl:"",sop:"SOP-012: Verificar gás 2x.",shift:"fechamento",notifyAfter:15},
   {id:106,title:"Fechar o bar e guardar estoque",description:"Guardar bebidas, limpar bancada do bar.",time:"22:30",dept:"bar",priority:"alta",videoUrl:"",sop:"",shift:"fechamento",notifyAfter:15},
   {id:107,title:"Segurança: portas e alarme",description:"Trancar saídas, ativar alarme.",time:"23:15",dept:"foh",priority:"alta",videoUrl:"",sop:"",shift:"fechamento",notifyAfter:15},
@@ -132,10 +143,10 @@ async function spRead(sid,lid){const t=await getToken();const r=await fetch(`htt
 async function spWrite(sid,lid,state,eid){const t=await getToken();const p=JSON.stringify({...state,savedDate:new Date().toDateString()});if(eid){await fetch(`https://graph.microsoft.com/v1.0/sites/${sid}/lists/${lid}/items/${eid}/fields`,{method:"PATCH",headers:{Authorization:`Bearer ${t}`,"Content-Type":"application/json"},body:JSON.stringify({AppData:p})});}else{const r=await fetch(`https://graph.microsoft.com/v1.0/sites/${sid}/lists/${lid}/items`,{method:"POST",headers:{Authorization:`Bearer ${t}`,"Content-Type":"application/json"},body:JSON.stringify({fields:{Title:"TorresBeeData",AppData:p}})});if(!r.ok)throw new Error("Create falhou");return(await r.json()).id;}}
 
 /* ── HELPERS ── */
-const inp={width:"100%",background:C.surface,border:`1px solid ${C.border}`,borderRadius:10,padding:"11px 14px",color:C.text,fontSize:14,boxSizing:"border-box"};
+const inp={width:"100%",background:C.surface,border:`1px solid ${C.border}`,borderRadius:10,padding:"clamp(11px,1.5vw,15px) clamp(14px,2vw,18px)",color:C.text,fontSize:"clamp(14px,1.8vw,17px)",boxSizing:"border-box"};
 const lbl={fontSize:11,fontWeight:600,color:C.textMuted,textTransform:"uppercase",letterSpacing:0.5,display:"block",marginBottom:5};
-const cardS={background:C.card,border:`1px solid ${C.border}`,borderRadius:14,padding:"14px",marginBottom:8};
-function Logo({h=32}){return<img src={`data:image/png;base64,${window.LOGO_B64}`} style={{height:h,objectFit:"contain"}} alt="TorresBee"/>;}
+const cardS={background:C.card,border:`1px solid ${C.border}`,borderRadius:14,padding:"clamp(14px,2vw,22px)",marginBottom:8};
+function Logo({h=32,responsive=false}){return<img src={`data:image/png;base64,${window.LOGO_B64}`} style={{height:responsive?'clamp(28px,4vw,48px)':h,objectFit:"contain"}} alt="TorresBee"/>;}
 function Badge({t,color,bg}){return<span style={{fontSize:11,fontWeight:700,color,background:bg,padding:"2px 9px",borderRadius:20,textTransform:"uppercase",letterSpacing:0.4,whiteSpace:"nowrap"}}>{t}</span>;}
 function Btn({onClick,children,v="primary",style={},disabled=false,sm=false}){
   const vs={primary:{background:C.gold,color:"#100900"},ghost:{background:"transparent",color:C.textMuted,border:`1px solid ${C.border}`},danger:{background:C.redDim,color:C.red,border:`1px solid ${C.red}44`},success:{background:C.greenDim,color:C.greenLight,border:`1px solid ${C.green}55`}};
@@ -206,7 +217,7 @@ function Login({onLogin,employees}){
     return(
       <div className="fi">
         <button onClick={()=>{setView("dept");setErr("");setPin("");}} style={{background:"none",border:"none",color:C.textMuted,fontSize:13,cursor:"pointer",marginBottom:18,display:"flex",alignItems:"center",gap:6}}>← Voltar</button>
-        <div style={{textAlign:"center",marginBottom:22}}><div style={{fontSize:18,fontWeight:800}}>Acesso Gerente</div><div style={{fontSize:13,color:C.textMuted,marginTop:4}}>PIN de 4 dígitos</div></div>
+        <div style={{textAlign:"center",marginBottom:22}}><div style={{fontSize:18,fontWeight:800}}>Manager Access</div><div style={{fontSize:13,color:C.textMuted,marginTop:4}}>4-digit PIN</div></div>
         <div style={{display:"flex",justifyContent:"center",gap:14,marginBottom:22}}>
           {[0,1,2,3].map(i=><div key={i} style={{width:16,height:16,borderRadius:"50%",background:pin.length>i?C.gold:C.border,transition:"background 0.18s"}}/>)}
         </div>
@@ -227,12 +238,12 @@ function Login({onLogin,employees}){
         <div style={{background:C.surface,borderRadius:20,padding:22,border:`1px solid ${C.border}`}} className="fi">
           {view==="dept"&&(
             <>
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}}>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit, minmax(140px, 1fr))",gap:10,marginBottom:14}}>
                 {DEPARTMENTS.map(dept=>{
                   const count=employees.filter(e=>e.dept===dept.id&&e.active).length;
                   return(
                     <div key={dept.id} onClick={()=>onLogin("colaborador",dept.label,null,dept.id)} style={{background:C.card,border:`1px solid ${dept.color}33`,borderRadius:14,padding:"18px 12px",textAlign:"center",cursor:"pointer",transition:"all 0.2s"}}>
-                      <div style={{fontSize:32,marginBottom:8}}>{dept.icon}</div>
+                      <div style={{fontSize:'clamp(28px, 5vw, 42px)',marginBottom:8}}>{dept.icon}</div>
                       <div style={{fontWeight:700,fontSize:13,color:dept.color,marginBottom:4}}>{dept.label}</div>
                       <div style={{fontSize:11,color:C.textMuted}}>{count} membros</div>
                     </div>
@@ -242,7 +253,7 @@ function Login({onLogin,employees}){
               <div style={{borderTop:`1px solid ${C.border}`,paddingTop:14}}>
                 <div onClick={()=>{setPin("");setErr("");setView("mgr");}} style={{display:"flex",alignItems:"center",gap:12,background:C.goldDim,border:`1px solid ${C.gold}33`,borderRadius:12,padding:"13px 16px",cursor:"pointer"}}>
                   <div style={{width:38,height:38,borderRadius:"50%",background:C.goldDim,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0}}>👔</div>
-                  <div style={{flex:1}}><div style={{fontWeight:700,fontSize:14,color:C.gold}}>Gerente</div><div style={{fontSize:12,color:C.textMuted}}>Acesso administrativo · PIN</div></div>
+                  <div style={{flex:1}}><div style={{fontWeight:700,fontSize:14,color:C.gold}}>Gerente</div><div style={{fontSize:12,color:C.textMuted}}>Admin access · PIN</div></div>
                   <span style={{color:C.gold,fontSize:18}}>›</span>
                 </div>
               </div>
@@ -261,7 +272,7 @@ function WhoDidIt({deptId,employees,onSelect,onClose}){
   const allEmps=employees.filter(e=>e.active&&e.dept!==deptId);
   return(
     <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.9)",zIndex:400,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={e=>e.target===e.currentTarget&&onClose()}>
-      <div style={{background:C.surface,borderRadius:20,padding:22,width:"100%",maxWidth:360,border:`1px solid ${C.border}`,maxHeight:"80vh",display:"flex",flexDirection:"column"}} className="fi">
+      <div style={{background:C.surface,borderRadius:20,padding:22,width:"100%",maxWidth:"min(400px, 90vw)",border:`1px solid ${C.border}`,maxHeight:"80vh",display:"flex",flexDirection:"column"}} className="fi">
         <div style={{fontWeight:800,fontSize:16,marginBottom:4}}>Quem concluiu? ✅</div>
         <div style={{fontSize:13,color:C.textMuted,marginBottom:16}}>Selecione seu nome para registrar</div>
         <div style={{overflowY:"auto",flex:1}}>
@@ -472,12 +483,12 @@ function DeptView({deptId,employees,tasks,taskStatus,setTaskStatus,weekPlan,setW
   }
   return(
     <div style={{minHeight:"100vh",background:"#000"}}>
-    <div style={{maxWidth:520,margin:"0 auto",minHeight:"100vh",display:"flex",flexDirection:"column"}}>
+    <div style={{maxWidth:"var(--max-w, 520px)",margin:"0 auto",minHeight:"100vh",display:"flex",flexDirection:"column"}}>
       <div style={{background:C.surface,borderBottom:`1px solid ${C.border}`,padding:"12px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:50}}>
         <div style={{display:"flex",alignItems:"center",gap:10}}>
-          <Logo h={26}/>
+          <Logo h={26} responsive={true}/>
           <div style={{borderLeft:`1px solid ${C.border}`,paddingLeft:10}}>
-            <div style={{fontSize:14,fontWeight:700,color:dept.color}}>{dept.icon} {dept.label}</div>
+            <div style={{fontSize:"clamp(14px, 2vw, 18px)",fontWeight:700,color:dept.color}}>{dept.icon} {dept.label}</div>
             <div style={{fontSize:11,color:C.textMuted}}>Checklist Operacional</div>
           </div>
         </div>
@@ -500,7 +511,7 @@ function DeptView({deptId,employees,tasks,taskStatus,setTaskStatus,weekPlan,setW
       <div style={{display:"flex",background:C.surface,margin:"10px 14px 0",borderRadius:12,border:`1px solid ${C.border}`,overflow:"hidden"}}>
         {[{id:"tarefas",l:`⏳ Pendentes (${pending.length})`},{id:"concluidas",l:`✅ Feitas (${completed.length})`},...((deptId==="boh"||deptId==="foh")?[{id:"producao",l:"🏭 Produção"}]:[])].map(t=><button key={t.id} onClick={()=>setTab(t.id)} style={{flex:1,padding:"10px 4px",fontSize:12,fontWeight:700,color:tab===t.id?dept.color:C.textMuted,background:"none",border:"none",borderBottom:`2px solid ${tab===t.id?dept.color:"transparent"}`,cursor:"pointer",transition:"all 0.2s"}}>{t.l}</button>)}
       </div>
-      <div style={{flex:1,padding:"12px 14px 40px",overflowY:"auto"}}>
+      <div style={{flex:1,padding:"clamp(12px,2vw,24px) clamp(14px,3vw,32px) 40px",overflowY:"auto"}}>
         {tab==="tarefas"&&<div className="fi">
           {shift==="fechamento"&&pending.length>0&&<div style={{background:C.goldDim,border:`1px solid ${C.gold}33`,borderRadius:12,padding:"12px 14px",marginBottom:12}}><div style={{fontSize:13,fontWeight:700,color:C.goldLight}}>⚠️ Fechamento</div><div style={{fontSize:12,color:C.textMuted,marginTop:4}}>Registre qualquer ocorrência ao concluir.</div></div>}
           {deptTasks.length===0&&<div style={{textAlign:"center",padding:50}}><div style={{fontSize:48,marginBottom:12}}>📋</div><div style={{fontWeight:700,fontSize:15}}>Nenhuma tarefa para este departamento</div></div>}
@@ -791,9 +802,9 @@ function Manager({user,tasks,setTasks,taskStatus,setTaskStatus,employees,setEmpl
   const filtered=shiftTasks.filter(t=>filterCat==="todas"||t.dept===filterCat);
   return(
     <div style={{minHeight:"100vh",background:"#000"}}>
-    <div style={{maxWidth:520,margin:"0 auto",minHeight:"100vh",display:"flex",flexDirection:"column"}}>
+    <div style={{maxWidth:"var(--max-w, 520px)",margin:"0 auto",minHeight:"100vh",display:"flex",flexDirection:"column"}}>
       <div style={{background:C.surface,borderBottom:`1px solid ${C.border}`,padding:"12px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:50}}>
-        <div style={{display:"flex",alignItems:"center",gap:10}}><Logo h={30}/><span style={{fontSize:11,color:C.textMuted,borderLeft:`1px solid ${C.border}`,paddingLeft:10}}>Gerente</span></div>
+        <div style={{display:"flex",alignItems:"center",gap:10}}><Logo h={30} responsive={true}/><span style={{fontSize:11,color:C.textMuted,borderLeft:`1px solid ${C.border}`,paddingLeft:10}}>Gerente</span></div>
         <div style={{display:"flex",gap:7,alignItems:"center"}}>
           <span style={{fontSize:13,fontWeight:700,color:C.gold}}>{time.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})}</span>
           <div style={{position:"relative"}}><Btn onClick={()=>setShowNotifs(!showNotifs)} v="ghost" style={{padding:"7px 10px",fontSize:17}}>🔔</Btn>{notifAlerts.length>0&&<div style={{position:"absolute",top:2,right:2,width:8,height:8,background:C.red,borderRadius:"50%",border:`2px solid ${C.surface}`}} className="pulse"/>}</div>
@@ -805,9 +816,9 @@ function Manager({user,tasks,setTasks,taskStatus,setTaskStatus,employees,setEmpl
         {["abertura","fechamento"].map(s=><button key={s} onClick={()=>setShift(s)} style={{flex:1,padding:"10px",borderRadius:10,fontWeight:700,fontSize:13,cursor:"pointer",border:"none",background:shift===s?C.gold:C.surface,color:shift===s?"#100900":C.textMuted,transition:"all 0.2s"}}>{s==="abertura"?"☀️ Abertura":"🌙 Fechamento"}</button>)}
       </div>
       <div style={{display:"flex",background:C.surface,margin:"10px 14px 0",borderRadius:12,border:`1px solid ${C.border}`,overflow:"hidden"}}>
-        {tabs.map(t=><button key={t.id} onClick={()=>setTab(t.id)} title={tabLabels[t.id]} style={{flex:1,padding:"11px 2px",fontSize:16,color:tab===t.id?C.gold:C.textMuted,background:"none",border:"none",borderBottom:`2px solid ${tab===t.id?C.gold:"transparent"}`,cursor:"pointer",transition:"all 0.2s"}}>{t.l}</button>)}
+        {tabs.map(t=><button key={t.id} onClick={()=>setTab(t.id)} title={tabLabels[t.id]} style={{flex:1,padding:"clamp(10px,1.5vw,16px) 2px",fontSize:"clamp(16px,2.5vw,22px)",color:tab===t.id?C.gold:C.textMuted,background:"none",border:"none",borderBottom:`2px solid ${tab===t.id?C.gold:"transparent"}`,cursor:"pointer",transition:"all 0.2s"}}>{t.l}</button>)}
       </div>
-      <div style={{flex:1,padding:"12px 14px 90px",overflowY:"auto"}}>
+      <div style={{flex:1,padding:"clamp(12px,2vw,24px) clamp(14px,3vw,32px) 90px",overflowY:"auto"}}>
         {tab==="dashboard"&&<MgrDash tasks={tasks} taskStatus={taskStatus} shiftTasks={shiftTasks} done={done} pct={pct} employees={employees} notifAlerts={notifAlerts} shift={shift}/>}
         {tab==="checklist"&&<div className="fi">
           <div style={{display:"flex",gap:6,overflowX:"auto",paddingBottom:8,marginBottom:4}}>
@@ -835,7 +846,7 @@ function MgrDash({tasks,taskStatus,shiftTasks,done,pct,employees,notifAlerts,shi
   return(<div className="fi">
     <div style={{...cardS,background:pct===100?"#061A0A":C.goldDim,border:`1px solid ${pct===100?C.green+"44":C.gold+"33"}`,marginBottom:14}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:14}}>
-        <div><div style={{fontSize:11,fontWeight:700,color:pct===100?C.green:C.goldLight,textTransform:"uppercase",letterSpacing:0.5,marginBottom:4}}>{shift==="abertura"?"☀️ Abertura":"🌙 Fechamento"} – Progresso</div><div style={{fontSize:40,fontWeight:800,lineHeight:1}}>{pct}<span style={{fontSize:18,color:C.textMuted}}>%</span></div><div style={{fontSize:13,color:C.textMuted,marginTop:4}}>{done} de {shiftTasks.length} tarefas</div></div>
+        <div><div style={{fontSize:11,fontWeight:700,color:pct===100?C.green:C.goldLight,textTransform:"uppercase",letterSpacing:0.5,marginBottom:4}}>{shift==="abertura"?"☀️ Abertura":"🌙 Fechamento"} – Progresso</div><div style={{fontSize:"clamp(36px,5vw,56px)",fontWeight:800,lineHeight:1}}>{pct}<span style={{fontSize:18,color:C.textMuted}}>%</span></div><div style={{fontSize:13,color:C.textMuted,marginTop:4}}>{done} de {shiftTasks.length} tarefas</div></div>
         <div style={{fontSize:48}}>{pct===100?"🎉":pct>70?"💪":pct>40?"⚡":"🔥"}</div>
       </div><PBar pct={pct}/>
     </div>
